@@ -1,6 +1,7 @@
 package windows
 
 import (
+	"github.com/levor/seeBattle/internal/types"
 	"image/color"
 	"log"
 
@@ -14,6 +15,7 @@ import (
 type Window struct {
 	a  fyne.App
 	cw fyne.Window
+	sb []types.Subject
 }
 
 func NewHomeWindow(a fyne.App) *Window {
@@ -53,7 +55,7 @@ func (hw Window) CreateHomeWindow() {
 	img := canvas.NewImageFromFile("seeBattle.png")
 	img.SetMinSize(fyne.NewSize(400, 300))
 	imgContainer := container.NewCenter(img)
-	content := container.NewVBox(text, text2, text3, separator1, imgContainer, separator2, btnNewGame)
+	content := container.NewVBox(text, text2, text3, separator1, imgContainer, separator2, container.NewCenter(btnNewGame))
 	w.SetContent(content)
 	w.Show()
 }

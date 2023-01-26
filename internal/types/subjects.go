@@ -1,16 +1,16 @@
 package types
 
 type Subject struct {
-	NameSubject string
-	Themes      []Theme
+	NameSubject string  `json:"nameSubject"`
+	Themes      []Theme `json:"themes"`
 }
 
 type Theme struct {
-	ThemeName string
-	Questions []Question
+	ThemeName string     `json:"themeName"`
+	Questions []Question `json:"questions"`
 }
 
 type Question struct {
-	Question string
-	Point    int
+	Question string `json:"question"`
+	Point    int    `json:"point"`
 }
