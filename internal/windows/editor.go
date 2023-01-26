@@ -2,9 +2,9 @@ package windows
 
 import (
 	"fmt"
-	"log"
-
 	"fyne.io/fyne/v2/layout"
+	"github.com/levor/seeBattle/internal/workers"
+	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -14,101 +14,156 @@ import (
 )
 
 func (ew Window) CreateEditorWindows() {
-	w := ew.a.NewWindow("See Battle (Editor)")
-	w.Resize(fyne.NewSize(800, 600))
-	ew.cw = w
+	ew.cw = ew.a.NewWindow("See Battle (Editor)")
+	ew.cw.Resize(fyne.NewSize(800, 600))
 
 	// Create MainMenu
 	menuItem1 := fyne.NewMenuItem("Новая игра", ew.newGame)
 	menuItem2 := fyne.NewMenuItem("Редактор", ew.openEditor)
 	newMenu := fyne.NewMenu("Файл", menuItem1, menuItem2)
 	menu := objects.NewMainMenu(newMenu)
-	w.SetMainMenu(menu.Create())
+	ew.cw.SetMainMenu(menu.Create())
 
-	fz := types.Subject{NameSubject: "Физика", Themes: []types.Theme{
-		{"Физика это", []types.Question{{"Что такое физика?", 3}, {"Вопрос 1", 2}, {"Вопрос 2", 1}}},
-		{"Что вы знаете о физике", []types.Question{{"Что такое физика222?", 3}, {"Вопрос 3", 2}, {"Вопрос 4", 1}}},
-		{"Сила это", []types.Question{{"Что такое физика3333?", 3}, {"Вопрос 21", 2}, {"Вопрос 22", 1}}},
-		{"Электричество это это", []types.Question{{"Вопрос 4", 3}}},
-	}}
-	math := types.Subject{NameSubject: "Математика", Themes: []types.Theme{
-		{"Математика это", []types.Question{{"Что такое физика12?", 3}, {"Вопрос 1", 2}, {"Вопрос 2", 1}}},
-		{"Что вы знаете о Математика", []types.Question{{"Что такое физика222?", 3}, {"Вопрос 3", 2}, {"Вопрос 4", 1}}},
-		{"Считаем", []types.Question{{"Что такое физика3333?", 3}, {"Вопрос 21", 2}, {"Вопрос 22", 1}}},
-		{"Рисуем", []types.Question{{"Вопрос 4", 3}}},
-	}}
-	subjects := make([]types.Subject, 0)
-	subjects = append(subjects, fz, math)
-	tab := ew.createTabs(subjects)
-	w.SetContent(tab)
-	w.Show()
+	ew.createTabs()
+
+	ew.cw.Show()
 }
 
-func (ew Window) createTabs(subj []types.Subject) *container.AppTabs {
+func (ew Window) createTabs() {
+	var err error
+	ew.sb, err = workers.GetData()
+	if err != nil {
+		log.Println(err)
+	}
 	tabs := container.NewAppTabs()
-	for _, subject := range subj {
-		tabs.Items = append(tabs.Items, ew.createTabContainer(subject))
+	for i, s := range ew.sb {
+		tabcontent := container.NewVBox()
+		for themid, _ := range s.Themes {
+			tabcontent.Objects = append(tabcontent.Objects, ew.createThemesList(themid, i, tabcontent))
+		}
+		j := i
+
+		btns := container.NewHBox(
+			container.NewCenter(widget.NewButton("Добавить тему", func() {
+				ew.addTheme(j)
+			})),
+			container.NewCenter(widget.NewButton("Удалить предмет", func() {
+				ew.deleteSubject(j)
+			})),
+		)
+		tabcontent.Add(btns)
+		tabs.Items = append(tabs.Items, container.NewTabItem(s.NameSubject, tabcontent))
 	}
 	tabs.SetTabLocation(container.TabLocationLeading)
-	return tabs
+	container := container.NewVBox(tabs, container.NewCenter(widget.NewButton("Добавить предмет", func() {
+		ew.addNewSubject()
+	})))
+	ew.cw.SetContent(container)
 }
 
-func (ew Window) createTabContainer(subject types.Subject) *container.TabItem {
-	tabcontent := container.NewVBox()
-	for i, theme := range subject.Themes {
-		tabcontent.Objects = append(tabcontent.Objects, ew.createThemesList(i, theme, tabcontent, subject.NameSubject))
-	}
-	return container.NewTabItem(subject.NameSubject, tabcontent)
-}
-
-func (ew Window) createThemesList(i int, theme types.Theme, cont *fyne.Container, nameSubject string) *fyne.Container {
-	content := container.New(layout.NewGridLayout(2),
-		widget.NewLabel(fmt.Sprintf("%d. %s", i+1, theme.ThemeName)),
-		widget.NewButton(fmt.Sprintf("Редактировать тему № %d", i+1), func() {
-			ew.editTheme(&theme, cont, nameSubject)
-		}),
+func (ew Window) createThemesList(themid, subid int, cont *fyne.Container) *fyne.Container {
+	content := container.New(layout.NewGridLayout(3),
+		widget.NewLabel(fmt.Sprintf("%d. %s", themid+1, ew.sb[subid].Themes[themid].ThemeName)),
+		container.NewCenter(widget.NewButton("Редактировать", func() {
+			ew.editTheme(themid, subid, cont)
+		})),
+		container.NewCenter(widget.NewButton("Удалить", func() {
+			ew.deleteThem(themid, subid)
+		})),
 	)
 	return content
 }
 
-func (ew Window) editTheme(theme *types.Theme, cont *fyne.Container, nameSubject string) {
+func (ew Window) editTheme(themid, subid int, cont *fyne.Container) {
 	cont.RemoveAll()
-	oldContent := cont
-	label := widget.NewLabel(fmt.Sprintf("Список вопросов для темы \"%s\"", theme.ThemeName))
+	label := widget.NewLabel(fmt.Sprintf("Список вопросов для темы \"%s\"", ew.sb[subid].Themes[themid].ThemeName))
 	label.Alignment = fyne.TextAlignCenter
 	cont.Add(label)
 	entrys := make([]*widget.Entry, 0)
-	for _, question := range theme.Questions {
+	for _, question := range ew.sb[subid].Themes[themid].Questions {
 		entry := widget.NewEntry()
 		entry.Text = question.Question
 		entrys = append(entrys, entry)
 	}
-	btn := widget.NewButton("Добавить новый вопрос", func() {
+	btn := container.NewCenter(widget.NewButton("Добавить новый вопрос", func() {
 		entrys = append(entrys, widget.NewEntry())
-		theme.Questions = append(theme.Questions, types.Question{})
-		oldContent = cont
+		ew.sb[subid].Themes[themid].Questions = append(ew.sb[subid].Themes[themid].Questions, types.Question{})
+		oldContent := cont
 		cont.RemoveAll()
-		ew.editTheme(theme, oldContent, nameSubject)
-	})
+		ew.editTheme(themid, subid, oldContent)
+	}))
 
-	btn2 := widget.NewButton("Сохранить изминения", func() {
+	btn2 := container.NewCenter(widget.NewButton("Сохранить изменения", func() {
 		newQuestion := make([]types.Question, 0)
 		for _, entry := range entrys {
 			newQuestion = append(newQuestion, types.Question{entry.Text, 1})
 		}
-		theme.Questions = newQuestion
-		log.Println(theme.Questions)
+		ew.sb[subid].Themes[themid].Questions = newQuestion
+		err := workers.UpdateData(ew.sb)
+		if err != nil {
+			log.Println(err)
+		}
 		log.Println("Data saved")
-	})
+	}))
 	for _, entry := range entrys {
 		cont.Add(entry)
 	}
 	cont.Add(btn)
 	cont.Add(btn2)
-	cont.Add(widget.NewButton(fmt.Sprintf("Вернутся к списку тем по предмету %s", nameSubject), func() {
-		cont.RemoveAll()
-		for _, object := range oldContent.Objects {
-			cont.Add(object)
+	cont.Add(container.NewCenter(widget.NewButton(fmt.Sprintf("Вернутся к списку тем по предмету %s", ew.sb[subid].NameSubject), func() {
+		ew.createTabs()
+	})))
+}
+
+func (ew Window) deleteThem(themid, subid int) {
+	copy(ew.sb[subid].Themes[themid:], ew.sb[subid].Themes[subid+1:])
+	ew.sb[subid].Themes[len(ew.sb[subid].Themes)-1] = types.Theme{}
+	ew.sb[subid].Themes = ew.sb[subid].Themes[:len(ew.sb[subid].Themes)-1]
+	err := workers.UpdateData(ew.sb)
+	if err != nil {
+		log.Println(err)
+	}
+	ew.createTabs()
+}
+func (ew Window) deleteSubject(subid int) {
+	copy(ew.sb[subid:], ew.sb[subid+1:])
+	ew.sb[len(ew.sb)-1] = types.Subject{}
+	ew.sb = ew.sb[:len(ew.sb)-1]
+	err := workers.UpdateData(ew.sb)
+	if err != nil {
+		log.Println(err)
+	}
+	ew.createTabs()
+}
+
+func (ew Window) addNewSubject() {
+	entry := widget.NewEntry()
+	ew.cw.SetContent(container.NewVBox(widget.NewLabel("Добавление нового предмета"), entry, container.NewCenter(widget.NewButton("Добавить", func() {
+		if entry.Text != "" && entry.Text != "Введите текст!" {
+			ew.sb = append(ew.sb, types.Subject{NameSubject: entry.Text})
+			err := workers.UpdateData(ew.sb)
+			if err != nil {
+				log.Println(err)
+			}
+			ew.createTabs()
+		} else {
+			entry.Text = "Введите текст!"
 		}
-	}))
+	}))))
+}
+
+func (ew Window) addTheme(sbID int) {
+	entry := widget.NewEntry()
+	ew.cw.SetContent(container.NewVBox(widget.NewLabel("Добавление новой темы"), entry, container.NewCenter(widget.NewButton("Добавить", func() {
+		if entry.Text != "" && entry.Text != "Введите текст!" {
+			ew.sb[sbID].Themes = append(ew.sb[sbID].Themes, types.Theme{ThemeName: entry.Text})
+			err := workers.UpdateData(ew.sb)
+			if err != nil {
+				log.Println(err)
+			}
+			ew.createTabs()
+		} else {
+			entry.Text = "Введите текст!"
+		}
+	}))))
 }
