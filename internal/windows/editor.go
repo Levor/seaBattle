@@ -2,30 +2,19 @@ package windows
 
 import (
 	"fmt"
+	"log"
+
 	"fyne.io/fyne/v2/layout"
 	"github.com/levor/seeBattle/internal/workers"
-	"log"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/levor/seeBattle/internal/objects"
 	"github.com/levor/seeBattle/internal/types"
 )
 
 func (ew Window) CreateEditorWindows() {
-	ew.cw = ew.a.NewWindow("See Battle (Editor)")
-	ew.cw.Resize(fyne.NewSize(800, 600))
-
-	// Create MainMenu
-	menuItem1 := fyne.NewMenuItem("Новая игра", ew.newGame)
-	menuItem2 := fyne.NewMenuItem("Редактор", ew.openEditor)
-	newMenu := fyne.NewMenu("Файл", menuItem1, menuItem2)
-	menu := objects.NewMainMenu(newMenu)
-	ew.cw.SetMainMenu(menu.Create())
-
 	ew.createTabs()
-
 	ew.cw.Show()
 }
 

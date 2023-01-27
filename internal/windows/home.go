@@ -1,9 +1,10 @@
 package windows
 
 import (
-	"github.com/levor/seeBattle/internal/types"
 	"image/color"
 	"log"
+
+	"github.com/levor/seeBattle/internal/types"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
@@ -61,13 +62,11 @@ func (hw Window) CreateHomeWindow() {
 }
 
 func (hw Window) newGame() {
-	hw.cw.Close()
 	hw.CreateGameWindow()
 	log.Println("New game open successfully")
 }
 
 func (hw Window) openEditor() {
-	hw.cw.Close()
 	hw.CreateEditorWindows()
 	log.Println("Editor open successfully")
 }

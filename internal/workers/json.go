@@ -2,8 +2,10 @@ package workers
 
 import (
 	"encoding/json"
-	"github.com/levor/seeBattle/internal/types"
 	"io/ioutil"
+	"os"
+
+	"github.com/levor/seeBattle/internal/types"
 )
 
 const FILENAME = "data.json"
@@ -11,7 +13,14 @@ const FILENAME = "data.json"
 func GetData() ([]types.Subject, error) {
 	file, err := ioutil.ReadFile(FILENAME)
 	if err != nil {
-		return nil, err
+		_, err = os.Create(FILENAME)
+		if err != nil {
+			return nil, err
+		}
+		file, err = ioutil.ReadFile(FILENAME)
+		if err != nil {
+			return nil, err
+		}
 	}
 	subjects := make([]types.Subject, 0)
 	if err = json.Unmarshal(file, &subjects); err != nil {
