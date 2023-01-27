@@ -2,12 +2,9 @@ package windows
 
 import (
 	"fmt"
-	"image/color"
 	"log"
 	"math"
 	"math/rand"
-
-	"fyne.io/fyne/v2/canvas"
 
 	"fyne.io/fyne/v2/dialog"
 
@@ -22,25 +19,33 @@ import (
 	"github.com/levor/seeBattle/internal/workers"
 )
 
+var totalTieam1 = 0
+var totalTieam2 = 0
+
 func (gw Window) CreateGameWindow() {
 	label1 := widget.NewLabel("Выберите предмет")
 	subjects, err := workers.GetData()
+	cont := container.NewVBox()
 	if err != nil {
 		log.Println(err)
 	}
 	if len(subjects) == 0 {
-		fmt.Println("Empty")
+		label1.Text = "Список предмеов пуст, запустите редактор и добавтье предме, тему игры и вопросы к ней!"
+		btn := container.NewCenter(widget.NewButton("Редактор", gw.openEditor))
+		cont = container.NewVBox(label1, btn)
+	} else {
+		subjectsNames := make([]string, 0)
+		themeMap := make(map[string][]types.Theme, 0)
+		for _, subject := range subjects {
+			subjectsNames = append(subjectsNames, subject.NameSubject)
+			themeMap[subject.NameSubject] = subject.Themes
+		}
+		selector1 := widget.NewSelect(subjectsNames, func(s string) {
+			gw.chooseTheme(s, themeMap)
+		})
+		cont = container.NewVBox(label1, selector1)
 	}
-	subjectsNames := make([]string, 0)
-	themeMap := make(map[string][]types.Theme, 0)
-	for _, subject := range subjects {
-		subjectsNames = append(subjectsNames, subject.NameSubject)
-		themeMap[subject.NameSubject] = subject.Themes
-	}
-	selector1 := widget.NewSelect(subjectsNames, func(s string) {
-		gw.chooseTheme(s, themeMap)
-	})
-	cont := container.NewVBox(label1, selector1)
+
 	gw.cw.SetContent(cont)
 	gw.cw.Show()
 }
@@ -73,20 +78,28 @@ func (gw Window) startGame(questionList []types.Question) {
 	rand.Shuffle(len(questionList),
 		func(i, j int) { questionList[i], questionList[j] = questionList[j], questionList[i] })
 	colColumn := math.Ceil(math.Sqrt(float64(len(questionList))))
+	maincont := container.NewVBox()
 	content := container.NewHBox()
 	gameField := container.NewVBox(container.New(layout.NewGridWrapLayout(fyne.NewSize(600, 2))))
-	team1 := container.NewVBox(widget.NewLabel("Команда 1"), widget.NewSeparator(), widget.NewLabel("Счет: 0"))
-	team2 := container.NewVBox(widget.NewLabel("Команда 2"), widget.NewSeparator(), widget.NewLabel("Счет: 0"))
-
-	for i := 0; i < len(questionList); {
+	label1 := widget.NewLabel(fmt.Sprintf("Счет: %d", totalTieam1))
+	label2 := widget.NewLabel(fmt.Sprintf("Счет: %d", totalTieam2))
+	team1 := container.NewVBox(widget.NewLabel("Команда 1"), widget.NewSeparator(), label1)
+	team2 := container.NewVBox(widget.NewLabel("Команда 2"), widget.NewSeparator(), label2)
+	btnList := make([]*widget.Button, 0)
+	for i := 0; i < len(questionList); i++ {
+		k := i
+		btn := widget.NewButton("", func() {
+			gw.openDialog(questionList[k], k, label1, label2)
+			btnList[k].Disable()
+		})
+		btnList = append(btnList, btn)
+	}
+	for i := 0; i < len(btnList); {
 		row := container.New(layout.NewGridLayoutWithColumns(int(colColumn)))
 		for j := colColumn; j > 0; j-- {
 			k := i
-			if k < len(questionList) {
-				btn := widget.NewButton("", func() {
-					gw.openDialog(questionList[k], k)
-				})
-				row.Add(btn)
+			if k < len(btnList) {
+				row.Add(btnList[k])
 				i++
 			} else {
 				i++
@@ -95,40 +108,29 @@ func (gw Window) startGame(questionList []types.Question) {
 		gameField.Add(row)
 	}
 	content = container.NewHBox(team1, gameField, team2)
-	gw.cw.SetContent(content)
+	maincont.Add(content)
+	maincont.Add(layout.NewSpacer())
+	maincont.Add(widget.NewButton("Подсчитать результаты", func() {
+		label1.SetText(fmt.Sprintf("Счет: %d", totalTieam1))
+		label2.SetText(fmt.Sprintf("Счет: %d", totalTieam2))
+	}))
+	gw.cw.SetContent(maincont)
 	gw.cw.Show()
 }
 
-func (gw Window) openDialog(question types.Question, k int) {
-	dialog := dialog.NewForm(fmt.Sprintf("Вопрос № %d", k), "Команда 1", "Команда 2", nil,
+func (gw Window) openDialog(question types.Question, k int, label1 *widget.Label, label2 *widget.Label) {
+	formItems := make([]*widget.FormItem, 0)
+	formItems = append(formItems, widget.NewFormItem("", widget.NewLabel(question.Question)))
+	dialog := dialog.NewForm(fmt.Sprintf("Вопрос № %d", k+1), "Команда 2", "Команда 1", formItems,
 		func(b bool) {
 			if b {
-				fmt.Println("Команда 1 заработала", question.Point)
+				totalTieam2 = totalTieam2 + question.Point
 			} else {
-				fmt.Println("Команда 2 заработала", question.Point)
+				totalTieam1 = totalTieam1 + question.Point
 			}
 		},
 		gw.cw)
+	label1.SetText(fmt.Sprintf("Счет: %d", totalTieam1))
+	label2.SetText(fmt.Sprintf("Счет: %d", totalTieam2))
 	dialog.Show()
-}
-
-func greenBTN() *fyne.Container {
-	btn := widget.NewButton("", nil)
-	btnColor := canvas.NewRectangle(color.NRGBA{0, 255, 0, 255})
-	cont := container.New(layout.NewMaxLayout(), btn, btnColor)
-	return cont
-}
-
-func redBTN() *fyne.Container {
-	btn := widget.NewButton("", nil)
-	btnColor := canvas.NewRectangle(color.NRGBA{255, 0, 0, 255})
-	cont := container.New(layout.NewMaxLayout(), btn, btnColor)
-	return cont
-}
-
-func blueBTN() *fyne.Container {
-	btn := widget.NewButton("", nil)
-	btnColor := canvas.NewRectangle(color.NRGBA{0, 0, 255, 255})
-	cont := container.New(layout.NewMaxLayout(), btn, btnColor)
-	return cont
 }
