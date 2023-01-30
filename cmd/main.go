@@ -3,7 +3,7 @@ package main
 import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/app"
-	"github.com/levor/seeBattle/internal/windows"
+	"github.com/levor/seaBattle/internal/windows"
 	"io/ioutil"
 )
 

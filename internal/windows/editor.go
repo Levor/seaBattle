@@ -5,12 +5,12 @@ import (
 	"log"
 
 	"fyne.io/fyne/v2/layout"
-	"github.com/levor/seeBattle/internal/workers"
+	"github.com/levor/seaBattle/internal/workers"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/levor/seeBattle/internal/types"
+	"github.com/levor/seaBattle/internal/types"
 )
 
 func (ew Window) CreateEditorWindows() {

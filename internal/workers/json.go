@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/levor/seeBattle/internal/types"
+	"github.com/levor/seaBattle/internal/types"
 )
 
 const FILENAME = "data.json"

@@ -12,11 +12,11 @@ import (
 
 	"fyne.io/fyne/v2"
 
-	"github.com/levor/seeBattle/internal/types"
+	"github.com/levor/seaBattle/internal/types"
 
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/levor/seeBattle/internal/workers"
+	"github.com/levor/seaBattle/internal/workers"
 )
 
 var totalTieam1 = 0

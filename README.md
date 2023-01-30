@@ -1,4 +1,4 @@
-# See battle game
+# Sea battle game
 
 ### Purpose of this project: 
 > The project was created to help teachers.

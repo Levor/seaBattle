@@ -1,4 +1,4 @@
-module github.com/levor/seeBattle
+module github.com/levor/seaBattle
 
 go 1.18
 

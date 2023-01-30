@@ -4,13 +4,13 @@ import (
 	"image/color"
 	"log"
 
-	"github.com/levor/seeBattle/internal/types"
+	"github.com/levor/seaBattle/internal/types"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
-	"github.com/levor/seeBattle/internal/objects"
+	"github.com/levor/seaBattle/internal/objects"
 )
 
 type Window struct {
